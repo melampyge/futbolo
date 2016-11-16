@@ -13,13 +13,13 @@ import pandas as pd
 class Player:
     """ data structure for keeping player attributes"""
     
-    def __init__(self, defc, ps, dr, sh, gk):
+    def __init__(self, defc, ps, dr, sh, st):
         
         self.defence = defc
         self.passing = ps
         self.dribbling = dr
         self.shooting = sh
-        self.goalkeeping = gk
+        self.stamina = st
         
         return
         
@@ -28,7 +28,7 @@ class Player:
 def gen_matchday_squad(players, database):
     """ create the matchday squad as a pandas dataframe structure"""
     
-    attributes = ['defence', 'passing', 'dribbling', 'shooting', 'goalkeeping']
+    attributes = ['defence', 'passing', 'dribbling', 'shooting', 'stamina']
 
     matchday_squad = pd.DataFrame(columns=players, index=attributes)
     for player in players:
@@ -36,7 +36,7 @@ def gen_matchday_squad(players, database):
         matchday_squad[player]['passing'] = database[player].passing
         matchday_squad[player]['dribbling'] = database[player].dribbling
         matchday_squad[player]['shooting'] = database[player].shooting
-        matchday_squad[player]['goalkeeping'] = database[player].goalkeeping
+        matchday_squad[player]['stamina'] = database[player].stamina
 
     return matchday_squad
 
@@ -53,7 +53,7 @@ def get_index(att):
         return 2
     elif att == 'shooting':
         return 3
-    elif att == 'goalkeeping':
+    elif att == 'stamina':
         return 4
 
 #############################################################################
@@ -97,36 +97,40 @@ def divide_into_2_teams(squad):
     ## 2 people with maximum overall attributes are captains
     
     max_overall = squad.mean()
-    top_5_players_ind = max_overall.argsort()[-5:][::-1]
-    top_5_players = max_overall[top_5_players_ind]
-    captains = [squad.iloc[:,top_5_players_ind[0]].name, squad.iloc[:,top_5_players_ind[1]].name]        
+    top_6_players_ind = max_overall.argsort()[-6:][::-1]
+    top_6_players = max_overall[top_6_players_ind]
+    captains = [squad.iloc[:,top_6_players_ind[0]].name, squad.iloc[:,top_6_players_ind[1]].name]        
     team_1 = [captains[0]]
     team_2 = [captains[1]]
     
     print "***************************\n"    
-    print "*** Top 5 players ***\n\n", top_5_players, "\n\n"
+    print "*** Top 6 players ***\n\n", top_6_players, "\n\n"
     print "***************************\n"    
     print "*** Captains ***\n\n", captains, "\n\n"
     print "***************************\n"    
     
     ## second captain chooses the player with maximum overall point
-    ## then first captain chooses 2 players with maximum overall points
+    ## then first captain chooses a player with maximum overall point
     
     print " TEAM CHOICE STARTS! "
     print "***************************\n\n"    
     
-    team_2.append( squad.iloc[:,top_5_players_ind[2]].name ) 
+    team_2.append( squad.iloc[:,top_6_players_ind[2]].name ) 
     team_2_attributes = (squad[team_2[0]] + squad[team_2[1]])/2.0
     print "The second captain ", team_2[0], " chose ", team_2[1], " as his 1st choice."
            
-    team_1.append( squad.iloc[:,top_5_players_ind[3]].name )
+    team_1.append( squad.iloc[:,top_6_players_ind[3]].name )
     team_1_attributes = (squad[team_1[0]] + squad[team_1[1]])/2.0
     print "The first captain ", team_1[0], " chose ", team_1[1], " as his 1st choice."
     
-    team_1.append( squad.iloc[:,top_5_players_ind[4]].name )
-    team_1_attributes = (team_1_attributes + squad[team_1[2]])/2.0
-    print "The first captain ", team_1[0], " chose ", team_1[2], " as his 2nd choice."
+    team_2.append( squad.iloc[:,top_6_players_ind[4]].name ) 
+    team_2_attributes = (squad[team_2[0]] + squad[team_2[2]])/2.0
+    print "The second captain ", team_2[0], " chose ", team_2[2], " as his 2nd choice."
 
+    team_1.append( squad.iloc[:,top_6_players_ind[5]].name )
+    team_1_attributes = (squad[team_1[0]] + squad[team_1[2]])/2.0
+    print "The first captain ", team_1[0], " chose ", team_1[2], " as his 2nd choice."
+    
     ## delete the players already chosen to compare the rest of the players 
 
     del squad[team_1[0]]
@@ -134,26 +138,23 @@ def divide_into_2_teams(squad):
     del squad[team_1[2]]
     del squad[team_2[0]]
     del squad[team_2[1]]
-
-    ## second captain adds a player based on the minimum attribute of the team as his second choice
-
-    squad, team_2_attributes = reinforce_min_attribute(team_2, team_2_attributes, squad, 2, 2)
-    
-    ## first captain adds a player based on the minimumm attribute of the team as his third choice
-    
-    squad, team_1_attributes = reinforce_min_attribute(team_1, team_1_attributes, squad, 3, 1)
+    del squad[team_2[2]]
  
     ## second captain makes his third choice
  
     squad, team_2_attributes = reinforce_min_attribute(team_2, team_2_attributes, squad, 3, 2)
     
-    ## first captain makes his fourth choice
+    ## first captain makes his third choice
 
-    squad, team_1_attributes = reinforce_min_attribute(team_1, team_1_attributes, squad, 4, 1)
+    squad, team_1_attributes = reinforce_min_attribute(team_1, team_1_attributes, squad, 3, 1)
 
     ## second captain makes his fourth choice
 
     squad, team_2_attributes = reinforce_min_attribute(team_2, team_2_attributes, squad, 4, 2)
+
+    ## first captain makes his fourth choice
+
+    squad, team_1_attributes = reinforce_min_attribute(team_1, team_1_attributes, squad, 4, 1)
         
     return team_1, team_2, team_1_attributes, team_2_attributes
  
@@ -244,34 +245,34 @@ def main():
     ## player database is a dictionary with name of the player as 'key'
     ## and the object containing attributes as 'value'
     ## attributes are listed in the following order :
-    ## DEFENCE - PASSING - DRIBBLING - SHOOTING - GOALKEEPING
+    ## DEFENCE - PASSING - DRIBBLING - SHOOTING - STAMINA
     
     player_database = {}
-    player_database['Luca'] = Player(10, 5, 6, 3, 7)
-    player_database['Ozer'] = Player(2, 7, 5, 6, 5)
-    player_database['Sebastian'] = Player(2, 6, 6, 10, 5)
-    player_database['Thomas'] = Player(7, 5, 9, 4, 9)
-    player_database['Varun'] = Player(2, 7, 5, 8, 10)
-    player_database['Arvind'] = Player(8, 9, 7, 5, 4)
-    player_database['Fabrizio'] = Player(10, 10, 10, 9, 7)
-    player_database['Maggi'] = Player(10, 9, 8, 7, 7)
-    player_database['Shibananda'] = Player(8, 4, 3, 4, 5)
-    player_database['Nicolo'] = Player(10, 6, 6, 5, 7)
-    player_database['Claire'] = Player(7, 3, 1, 1, 1)
-    player_database['Manuel'] = Player(9, 10, 8, 7, 7)
-    player_database['Elisa'] = Player(6, 3, 2, 1, 1)
-    player_database['Dip'] = Player(10, 7, 7, 7, 7)
-    player_database['Andy'] = Player(7, 6, 6, 5, 6)
-    player_database['Emiliano'] = Player(9, 8, 6, 5, 6)
-    player_database['Ali'] = Player(9, 8, 4, 6, 10)
-    
+    player_database['Luca'] = Player(5, 3, 5, 2, 5)
+    player_database['Ozer'] = Player(1, 5, 2, 2, 2)
+    player_database['Sebastian'] = Player(2, 4, 3, 5, 1)
+    player_database['Thomas'] = Player(3, 2, 5, 2, 5)
+    player_database['Varun'] = Player(1, 3, 2, 5, 1)
+    player_database['Arvind'] = Player(4, 5, 3, 3, 5)
+    player_database['Fabrizio'] = Player(5, 5, 5, 5, 4)
+    player_database['Maggi'] = Player(5, 5, 5, 4, 5)
+    player_database['Shibananda'] = Player(5, 2, 2, 1, 2)
+    player_database['Nicolo'] = Player(5, 3, 3, 3, 4)
+    player_database['Claire'] = Player(4, 1, 1, 1, 1)
+    player_database['Manuel'] = Player(5, 5, 4, 4, 3)
+    player_database['Elisa'] = Player(4, 1, 1, 1, 1)
+    player_database['Dip'] = Player(5, 4, 4, 3, 5)
+    player_database['Andy'] = Player(4, 3, 3, 3, 2)
+    player_database['Emiliano'] = Player(5, 4, 4, 4, 4)
+    player_database['Ali'] = Player(5, 4, 4, 5, 1)
+            
     ## OPTION WITH 10 PLAYERS:
     
     ## create the overall matchday squad as a pandas dataframe structures
     ## columns are players, attributes are index
     
     matchday_players = ['Luca', 'Ozer', 'Sebastian', \
-        'Thomas', 'Ali', 'Emiliano', 'Fabrizio', 'Maggi', 'Shibananda', 'Nicolo']
+        'Shibananda', 'Ali', 'Emiliano', 'Claire', 'Varun', 'Nicolo', 'Arvind']
     matchday_squad = gen_matchday_squad(matchday_players, player_database)
 
     print "\n***************************\n"        
