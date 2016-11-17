@@ -249,9 +249,9 @@ def main():
     
     player_database = {}
     player_database['Luca'] = Player(5, 3, 5, 2, 5)
-    player_database['Ozer'] = Player(1, 5, 2, 2, 2)
+    player_database['Ozer'] = Player(3, 5, 4, 3, 3)
     player_database['Sebastian'] = Player(2, 4, 3, 5, 1)
-    player_database['Thomas'] = Player(3, 2, 5, 2, 5)
+    player_database['Thomas'] = Player(3, 2, 3, 2, 5)
     player_database['Varun'] = Player(1, 3, 2, 5, 1)
     player_database['Arvind'] = Player(4, 5, 3, 3, 5)
     player_database['Fabrizio'] = Player(5, 5, 5, 5, 4)
